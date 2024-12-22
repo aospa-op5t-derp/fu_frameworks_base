@@ -42,9 +42,11 @@ import android.widget.ImageView;
 import android.graphics.Rect;
 
 import com.android.systemui.Dependency;
-import com.android.systemui.res.R;
 import com.android.systemui.biometrics.AuthController;
 import com.android.systemui.plugins.statusbar.StatusBarStateController;
+import com.android.systemui.res.R;
+
+import org.derpfest.providers.DerpFestSettings;
 
 public class UdfpsAnimation extends ImageView {
 
@@ -117,12 +119,12 @@ public class UdfpsAnimation extends ImageView {
 
         setScaleType(ImageView.ScaleType.CENTER_INSIDE);
 
-        Uri udfpsAnimStyle = Settings.Secure.getUriFor(Settings.Secure.UDFPS_ANIM_STYLE);
+        Uri udfpsAnimStyle = Settings.Secure.getUriFor(DerpFestSettings.Secure.UDFPS_ANIM_STYLE);
         ContentObserver contentObserver = new ContentObserver(null) {
             @Override
             public void onChange(boolean selfChange, Uri uri) {
                 int value = Settings.Secure.getIntForUser(mContext.getContentResolver(),
-                        Settings.Secure.UDFPS_ANIM_STYLE, 0, UserHandle.USER_CURRENT);
+                        DerpFestSettings.Secure.UDFPS_ANIM_STYLE, 0, UserHandle.USER_CURRENT);
                 int style = (value < 0 || value >= mStyleNames.length) ? 0 : value;
                 mContext.getMainExecutor().execute(() -> {
                     updateAnimationStyle(style);
@@ -187,19 +189,23 @@ public class UdfpsAnimation extends ImageView {
 
     public void show() {
         if (mIsKeyguard && isAnimationEnabled()) {
-            try {
-                if (getWindowToken() == null) {
-                    mWindowManager.addView(this, mAnimParams);
-                } else {
-                    mWindowManager.updateViewLayout(this, mAnimParams);
-                }
-            } catch (RuntimeException e) {
+            showAnimation();
+        }
+    }
+
+    private void showAnimation() {
+        try {
+            if (getWindowToken() == null) {
+                mWindowManager.addView(this, mAnimParams);
+            } else {
+                mWindowManager.updateViewLayout(this, mAnimParams);
+            }
+        } catch (RuntimeException e) {
                 e.printStackTrace();
                 return;
-            }
-            if (recognizingAnim != null) {
-                recognizingAnim.start();
-            }
+        }
+        if (recognizingAnim != null) {
+            recognizingAnim.start();
         }
     }
 
